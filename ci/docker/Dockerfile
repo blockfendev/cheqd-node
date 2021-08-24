@@ -1,6 +1,6 @@
 #####  Build container  #####
 
-FROM golang:buster as builder
+FROM --platform=linux/amd64 golang:buster as builder 
 
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends \
@@ -8,7 +8,7 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     curl \
     # Protoc
     protobuf-compiler \
-    libprotobuf-dev
+    libprotobuf-dev 
 
 # Starport
 RUN curl https://get.starport.network/starport! | bash
@@ -23,13 +23,14 @@ COPY vue ./vue
 COPY x ./x
 COPY go.mod .
 COPY go.sum .
+   
 
 RUN starport chain build
 
 
 #####  Run container  #####
 
-FROM debian:buster
+FROM --platform=linux/amd64 debian:buster
 
 COPY --from=builder /go/bin/cheqd-noded /bin
 

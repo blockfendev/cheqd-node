@@ -38,7 +38,7 @@ echo "##### [Validator operators] Init genesis"
 
 cheqd-noded init dummy_node --chain-id $CHAIN_ID --home $CLIENT_HOME
 
-sed -i 's/"stake"/"cheq"/' ${CLIENT_HOME}/config/genesis.json
+sed -i 's/\"stake\"/\"cheq\"/' ${CLIENT_HOME}/config/genesis.json
 
 echo "##### [Validator operators] Add them to the genesis" 
 

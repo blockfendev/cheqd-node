@@ -4,8 +4,8 @@
 
 set -euox pipefail
 
-NODES_COUNT="4"
-CHAIN_ID="cheqd"
+NODES_COUNT="1"
+CHAIN_ID="cheq-testnet"
 NODE_CONFIGS_DIR="node_configs"
 
 rm -rf $NODE_CONFIGS_DIR
