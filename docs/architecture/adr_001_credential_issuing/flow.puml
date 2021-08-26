@@ -1,0 +1,32 @@
+@startuml
+Issuer -> Holder: Credential Offer (+ payment_request)
+note over Holder
+payment_info ->
+{
+"amount": string, - price for issuing
+"denom" : string - denomination for paying
+"from": string, - source payment account (Holder)
+"to": string, - target payment account (Issuer)
+"memo": string, - metadata
+"balance": string, - empty
+"transaction_hash" - empty
+}
+end note
+Holder -> Ledger: payment transaction (with memo from payment_info)
+Ledger -> Holder: payment transaction response (with transaction_hash)
+Holder -> Issuer: Credential Request (+ payment_receipt)
+note over Holder
+payment_info ->
+{
+"amount": string, - amount of tokens was How much money do you need
+"denom" : string - denomination for paying
+"balance": string, - new balance
+"from": string, - source payment account
+"to": string, - target payment account
+"memo": string, - passed metadata
+"transaction_hash": string - hash of transaction_hash
+}
+end note
+Issuer -> Holder: Credential (+ payment info)
+Holder -> Issuer: Accept
+@enduml
