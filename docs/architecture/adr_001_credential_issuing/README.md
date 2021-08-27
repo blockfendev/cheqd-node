@@ -53,15 +53,50 @@ And use a payment decorator to add information about an issuing price and addres
 
 ### Step 2: Payment transaction 
 This operation has 5 steps:
-* *Step 2.1.* Build a request for transferring coins. Example: `cheqd_ledger::bank::build_msg_send(account_id, second_account, amount_for_transfer, denom)`. 
-* *Step 2.2.* Built a transaction with the request from the previous step. Example: `cheqd_ledger::auth::build_tx(pool_alias, pub_key, &msg, account_number, account_sequence, max_gas, max_coin_amount, denom, timeout_height, memo)`. 
-* *Step 2.3.* Sign a transaction from the previous step. `cheqd_keys::sign(wallet_handle, key_alias, &tx)`. 
-* *Step 2.4.* Broadcast a signed transaction from the previous step. `cheqd_pool::broadcast_tx_commit(pool_alias, &signed)`. 
-* *Step 2.5.* Parse response after broadcasting from the previous step. `cheqd_ledger::bank::parse_msg_send_resp(&resp)`. 
+* *Step 2.1.* Build a request for transferring coins. Example: `cheqd_ledger::bank::build_msg_send(from_account, to_account, amount_for_transfer, denom)`.
+  - `from_account` the potential Holder Cheqd account address
+  - `to_account` the same with `payeeId` from a payment request
+  - `amount_for_transfer` the same with `details.total.amount.value` from a payment request
+  - `denom` the same with `details.total.amount.currency` from a payment request
+* *Step 2.2.* Built a transaction with the request from the previous step. Example: `cheqd_ledger::auth::build_tx(pool_alias, pub_key, builded_request, account_number, account_sequence, max_gas, max_coin_amount, denom, timeout_height, memo)`. 
+  - `memo` tha same with `details.id` from a payment request
+* *Step 2.3.* Sign a transaction from the previous step. `cheqd_keys::sign(wallet_handle, key_alias, tx)`. 
+* *Step 2.4.* Broadcast a signed transaction from the previous step. `cheqd_pool::broadcast_tx_commit(pool_alias, signed)`.
+  Response format:
+  ```
+    Response {
+     check_tx: TxResult {
+        code: 0,
+        data: None,
+        log: "",
+        info: "",
+        gas_wanted: 0,
+        gas_used: 0,
+        events: [
+        ],
+        codespace: ""
+     },
+     deliver_tx: TxResult {
+        code: 0,
+        data: Some(Data([...])),
+        log: "[{\"events\":[{\"type\":\"message\",\"attributes\":[{\"key\":\"action\",\"value\":\"send\"},{\"key\":\"sender\",\"value\":\"cosmos1fknpjldck6n3v2wu86arpz8xjnfc60f99ylcjd\"},{\"key\":\"module\",\"value\":\"bank\"}]},{\"type\":\"transfer\",\"attributes\":[{\"key\":\"recipient\",\"value\":\"cosmos1pvnjjy3vz0ga6hexv32gdxydzxth7f86mekcpg\"},{\"key\":\"sender\",\"value\":\"cosmos1fknpjldck6n3v2wu86arpz8xjnfc60f99ylcjd\"},{\"key\":\"amount\",\"value\":\"100cheq\"}]}]}]",
+        info: "",
+        gas_wanted: 0,
+        gas_used: 0,
+        events: [...], 
+        codespace: ""
+     },
+     hash: "1B3B00849B4D50E8FCCF50193E35FD6CA5FD4686ED6AD8F847AC8C5E466CFD3E",
+     height: 353
+  }
+  ```
+  `hash` - transaction hash
+  `height` - ledger height
+ 
 [Read more about Cheqd payment transaction](https://gitlab.com/evernym/verity/vdr-tools/-/tree/cheqd/docs/design/014-bank-transactions)
 
 ### Step 3: Credential Request
-This is a message sent by the potential Holder to the Issuer, to request the issuance of a credential.
+This is a message sent by the potential Holder to the Issuer, to request the issuance of a credential. After sending a payment transaction.
 ```
 {
     "@type": "https://didcomm.org/issue_credential/1.0/request_credential",
@@ -71,15 +106,21 @@ This is a message sent by the potential Holder to the Issuer, to request the iss
     "~payment_receipt": {
       "request_id": "0a2bc4a6-1f45-4ff0-a046-703c71ab845d",
       "selected_method": "cheqd",
-      "transaction_id": "0x5674bfea99c480e110ea61c3e52783506e2c467f108b3068d642712aca4ea479",
+      "transaction_id": "1B3B00849B4D50E8FCCF50193E35FD6CA5FD4686ED6AD8F847AC8C5E466CFD3E",
       "payeeId": "0xD15239C7e7dDd46575DaD9134a1bae81068AB2A4",
       "amount": { "currency": "cheq", "value": "10.0" }
     }
 }
 ```
 
+`request_id` the same with `details.id` from payment_request and with `memo` from a payment transaction
 
-### Step 4: Credential issuing
+### Step 4: Check payment_receipt
+Issuer receives Credential Request + `payment_receipt` with payment `transaction_id`. It allows Issuer 
+- get the payment transaction by hash from Cheqd Ledger (`get_tx_by_hash` method)
+- check `memo` field from Credential Offer in the transaction.
+
+### Step 5: Credential issuing
 Issuer receives Credential Request + `payment_receipt` with payment `transaction_id`. It allows Issuer 
 - get the payment transaction by hash from Cheqd Ledger (`get_tx_by_hash` method)
 - check `memo` field from Credential Offer in the transaction.
